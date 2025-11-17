@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>stupid currency converter</title>
+    
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Import Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Use Inter as the default font */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Prevent scrolling on body while dragging knob on mobile */
+            touch-action: none;
+        }
+        
+        /* Simple loading spinner */
+        .spinner {
+            border: 2px solid rgba(0,0,0,0.1);
+            border-left-color: #4f46e5; /* indigo-600 */
+            border-radius: 50%;
+            width: 1.25rem; /* 20px */
+            height: 1.25rem; /* 20px */
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Hide number input arrows (cross-browser) */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+          appearance: textfield;
+        }
+
+        /* Knob styles */
+        #knob {
+            touch-action: none; /* Prevent scrolling while dragging knob */
+            cursor: ns-resize; /* Vertical resize cursor */
+            transition: transform 0.1s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <!-- Main Application Card -->
+    <div class="w-full max-w-md p-6 bg-white rounded-xl shadow-lg m-4">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">
+            stupid currency converter
+        </h1>
+
+        <!-- 'FROM' Currency Section -->
+        <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-500" for="from-amount">From</label>
+            <div class="flex items-stretch rounded-lg border border-gray-300 bg-gray-50">
+                <button id="from-currency-btn" class="flex-shrink-0 px-4 py-3 bg-gray-100 rounded-l-lg hover:bg-gray-200 focus:outline-none">
+                    <span id="from-currency-code" class="font-semibold text-indigo-700">USD</span>
+                </button>
+                <input type="number" id="from-amount" readonly value="1" class="w-full text-2xl font-semibold text-gray-900 p-3 bg-gray-50 rounded-r-lg focus:outline-none" placeholder="0.00">
+            </div>
+            <span id="from-currency-name" class="text-xs text-gray-500 pl-1">US Dollar</span>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="flex justify-center items-center my-6 space-x-6">
+            <!-- Amount Control Knob -->
+            <div id="knob" class="w-28 h-28 bg-gray-200 rounded-full flex items-center justify-center shadow-inner select-none">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center shadow">
+                    <div class="w-20 h-20 bg-white rounded-full flex flex-col items-center justify-center shadow-inner text-gray-500">
+                        <!-- Dial Indicator -->
+                        <div id="knob-dial" class="w-1 h-6 bg-indigo-600 rounded-full absolute top-2"></div>
+                        <!-- Up Arrow -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                        </svg>
+                        <!-- Down Arrow -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 mt-1">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Buttons Column -->
+            <div class="flex flex-col space-y-4">
+                <!-- SWAP Button -->
+                <button id="swap-btn" title="Swap Currencies" class="p-3 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
+                </button>
+                
+                <!-- RESET Button -->
+                <button id="reset-btn" title="Reset to 1" class="p-3 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.667 0c.252-.252.484-.52.7-.796m-14.017-7.221a8.25 8.25 0 0 1 11.667 0c.252.252.484.52.7.796m-14.017 7.221L2.985 19.644M16.023 9.348 13.04 12.331" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 'TO' Currency Section -->
+        <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-500" for="to-amount">To</label>
+            <div class="flex items-stretch rounded-lg border border-gray-300 bg-gray-50">
+                <button id="to-currency-btn" class="flex-shrink-0 px-4 py-3 bg-gray-100 rounded-l-lg hover:bg-gray-200 focus:outline-none">
+                    <span id="to-currency-code" class="font-semibold text-indigo-700">EUR</span>
+                </button>
+                <div class="relative w-full">
+                     <input type="number" id="to-amount" readonly class="w-full text-2xl font-semibold text-gray-900 p-3 border-l border-gray-300 bg-gray-50 rounded-r-lg focus:outline-none" placeholder="0.00">
+                     <div id="loading-spinner" class="spinner absolute right-3 top-1/2 -mt-2.5 hidden"></div>
+                </div>
+            </div>
+            <span id="to-currency-name" class="text-xs text-gray-500 pl-1">Euro</span>
+        </div>
+
+        <!-- Attribution -->
+        <p class="text-xs text-gray-400 text-center mt-6">
+            Rates from <a href="https://frankfurter.app" target="_blank" class="underline">frankfurter.app</a>
+        </p>
+    </div>
+
+    <!-- Currency Selection Modal -->
+    <div id="currency-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="flex flex-col w-full h-full max-w-md bg-white rounded-lg shadow-xl md:h-auto md:max-h-[80vh]">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 class="text-lg font-semibold text-gray-800">Select Currency</h2>
+                <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="p-4 border-b">
+                <input type="text" id="search-currency" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600" placeholder="Type to search (e.g., USD, Euro)">
+            </div>
+
+            <!-- Currency List -->
+            <div id="currency-list" class="flex-1 overflow-y-auto p-2">
+                <!-- Currency items will be dynamically injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- CONSTANTS ---
+            const API_BASE = 'https://api.frankfurter.app';
+
+            // --- APPLICATION STATE ---
+            const state = {
+                fromCurrency: 'USD',
+                toCurrency: 'EUR',
+                selectingFor: 'from', // 'from' or 'to'
+                currencies: {}, // { "USD": "US Dollar", ... }
+                debounceTimer: null,
+                isKnobDragging: false,
+                knobStartY: 0,
+                knobStartAmount: 0,
+            };
+
+            // --- DOM ELEMENTS ---
+            const elements = {
+                fromAmountInput: document.getElementById('from-amount'),
+                toAmountInput: document.getElementById('to-amount'),
+                fromCurrencyBtn: document.getElementById('from-currency-btn'),
+                toCurrencyBtn: document.getElementById('to-currency-btn'),
+                fromCurrencyCode: document.getElementById('from-currency-code'),
+                toCurrencyCode: document.getElementById('to-currency-code'),
+                fromCurrencyName: document.getElementById('from-currency-name'),
+                toCurrencyName: document.getElementById('to-currency-name'),
+                swapBtn: document.getElementById('swap-btn'),
+                resetBtn: document.getElementById('reset-btn'),
+                modal: document.getElementById('currency-modal'),
+                closeModalBtn: document.getElementById('close-modal-btn'),
+                searchCurrencyInput: document.getElementById('search-currency'),
+                currencyListDiv: document.getElementById('currency-list'),
+                loadingSpinner: document.getElementById('loading-spinner'),
+                knob: document.getElementById('knob')
+            };
+
+            // -------------------------------------
+            // --- API & DATA FETCHING ---
+            // -------------------------------------
+
+            /**
+             * Fetches the list of all available currencies from the API.
+             */
+            async function loadCurrencies() {
+                try {
+                    const response = await fetch(`${API_BASE}/currencies`);
+                    if (!response.ok) throw new Error('Failed to fetch currencies');
+                    
+                    state.currencies = await response.json();
+                    
+                    populateCurrencyList(state.currencies);
+                    updateCurrencyNames();
+                    convertCurrency(); // Perform initial conversion
+                } catch (error) {
+                    console.error('Error loading currencies:', error);
+                    elements.currencyListDiv.innerHTML = '<p class="text-red-500 p-4">Could not load currencies.</p>';
+                }
+            }
+
+            /**
+             * Fetches the exchange rate and updates the 'to' amount.
+             */
+            async function convertCurrency() {
+                const amount = parseFloat(elements.fromAmountInput.value);
+
+                if (isNaN(amount) || amount === 0) {
+                    elements.toAmountInput.value = '0.00';
+                    return;
+                }
+
+                if (state.fromCurrency === state.toCurrency) {
+                    elements.toAmountInput.value = amount.toFixed(2);
+                    return;
+                }
+
+                elements.loadingSpinner.classList.remove('hidden');
+                elements.toAmountInput.value = ''; // Clear previous value
+
+                try {
+                    const response = await fetch(`${API_BASE}/latest?amount=${amount}&from=${state.fromCurrency}&to=${state.toCurrency}`);
+                    if (!response.ok) throw new Error('Conversion failed');
+                    
+                    const data = await response.json();
+                    const rate = data.rates[state.toCurrency];
+                    elements.toAmountInput.value = rate.toFixed(2);
+
+                } catch (error) {
+                    console.error('Error converting currency:', error);
+                    elements.toAmountInput.value = 'Error';
+                } finally {
+                    elements.loadingSpinner.classList.add('hidden');
+                }
+            }
+
+            /**
+             * Debounces the currency conversion API call to avoid rate-limiting.
+             */
+            function debouncedConvert() {
+                clearTimeout(state.debounceTimer);
+                state.debounceTimer = setTimeout(convertCurrency, 300); // 300ms delay
+            }
+
+            // -------------------------------------
+            // --- UI & MODAL ---
+            // -------------------------------------
+
+            /**
+             * Populates the modal list with currency items.
+             * @param {object} currencies - The object of currencies { "CODE": "Name" }.
+             */
+            function populateCurrencyList(currencies) {
+                elements.currencyListDiv.innerHTML = ''; // Clear list
+                for (const [code, name] of Object.entries(currencies)) {
+                    const item = document.createElement('button');
+                    item.className = 'w-full flex justify-between items-center p-3 hover:bg-gray-100 rounded-lg text-left focus:outline-none focus:bg-indigo-100 currency-item';
+                    item.dataset.code = code;
+                    item.dataset.name = name;
+                    
+                    item.innerHTML = `
+                        <div>
+                            <span class="font-semibold text-gray-800">${code}</span>
+                            <span class="text-sm text-gray-500 ml-2">${name}</span>
+                        </div>
+                    `;
+                    item.addEventListener('click', handleCurrencySelect);
+                    elements.currencyListDiv.appendChild(item);
+                }
+            }
+
+            /**
+             * Opens the currency selection modal.
+             * @param {'from' | 'to'} type - Which currency is being selected.
+             */
+            function openModal(type) {
+                state.selectingFor = type;
+                elements.modal.classList.remove('hidden');
+                elements.searchCurrencyInput.value = ''; // Clear search
+                filterCurrencies(); // Reset filter
+                elements.searchCurrencyInput.focus(); // Focus search bar
+            }
+
+            /**
+             * Closes the currency selection modal.
+             */
+            function closeModal() {
+                elements.modal.classList.add('hidden');
+            }
+
+            /**
+             * Updates the currency code and name in the main UI.
+             */
+            function updateCurrencyNames() {
+                elements.fromCurrencyCode.textContent = state.fromCurrency;
+                elements.fromCurrencyName.textContent = state.currencies[state.fromCurrency] || '...';
+                elements.toCurrencyCode.textContent = state.toCurrency;
+                elements.toCurrencyName.textContent = state.currencies[state.toCurrency] || '...';
+            }
+
+            /**
+             * Filters the currency list in the modal based on search input.
+             */
+            function filterCurrencies() {
+                const searchTerm = elements.searchCurrencyInput.value.toLowerCase();
+                const items = elements.currencyListDiv.getElementsByClassName('currency-item');
+
+                for (const item of items) {
+                    const code = item.dataset.code.toLowerCase();
+                    const name = item.dataset.name.toLowerCase();
+                    if (code.includes(searchTerm) || name.includes(searchTerm)) {
+                        item.classList.remove('hidden');
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                }
+            }
+            
+            // -------------------------------------
+            // --- EVENT HANDLERS ---
+            // -------------------------------------
+
+            /**
+             * Handles the selection of a currency from the modal.
+             * @param {Event} e - The click event from the currency button.
+             */
+            function handleCurrencySelect(e) {
+                const { code } = e.currentTarget.dataset;
+
+                if (state.selectingFor === 'from') {
+                    state.fromCurrency = code;
+                } else {
+                    state.toCurrency = code;
+                }
+                
+                updateCurrencyNames();
+                closeModal();
+                convertCurrency();
+            }
+
+            /**
+             * Swaps the 'from' and 'to' currencies.
+             */
+            function handleSwap() {
+                [state.fromCurrency, state.toCurrency] = [state.toCurrency, state.fromCurrency];
+                
+                const toVal = parseFloat(elements.toAmountInput.value);
+                elements.fromAmountInput.value = (toVal && toVal !== 0) ? toVal.toFixed(2) : 1;
+                
+                updateCurrencyNames();
+                convertCurrency();
+            }
+
+            /**
+             * Resets the 'from' amount to 1 and recalculates.
+             */
+            function handleReset() {
+                elements.fromAmountInput.value = '1';
+                elements.toAmountInput.value = '0.00'; // Clear 'to' field immediately
+                convertCurrency();
+            }
+
+            // -------------------------------------
+            // --- KNOB CONTROLS ---
+            // -------------------------------------
+
+            /**
+             * Handles the start of a drag (pointer down) on the knob.
+             * @param {PointerEvent} e - The pointer down event.
+             */
+            function handleKnobPointerDown(e) {
+                state.isKnobDragging = true;
+                state.knobStartY = e.clientY;
+                state.knobStartAmount = parseFloat(elements.fromAmountInput.value) || 0;
+                elements.knob.setPointerCapture(e.pointerId); // Capture pointer events
+                elements.knob.classList.add('cursor-grabbing');
+                e.preventDefault();
+            }
+            
+            /**
+             * Handles the drag (pointer move) event.
+             * @param {PointerEvent} e - The pointer move event.
+             */
+            function handleKnobPointerMove(e) {
+                if (!state.isKnobDragging) return;
+
+                const deltaY = state.knobStartY - e.clientY; // Dragging up = positive change
+
+                // Adjust sensitivity
+                // Every 10px of drag = 1 unit
+                // Hold Shift for fine control (10px = 0.1 unit)
+                const sensitivity = e.shiftKey ? 100 : 10;
+                const change = deltaY / sensitivity;
+                
+                const newValue = Math.max(0, state.knobStartAmount + change);
+                
+                // Format to 2 decimals if shift is held, otherwise 0
+                elements.fromAmountInput.value = newValue.toFixed(e.shiftKey ? 2 : 0);
+
+                // Visually rotate the knob based on drag distance for tactile feedback
+                elements.knob.style.transform = `rotate(${deltaY / 3}deg)`;
+
+                // Live conversion
+                debouncedConvert();
+            }
+
+            /**
+             * Handles the end of a drag (pointer up) on the knob.
+             * @param {PointerEvent} e - The pointer up event.
+             */
+            function handleKnobPointerUp(e) {
+                if (!state.isKnobDragging) return;
+                
+                state.isKnobDragging = false;
+                elements.knob.releasePointerCapture(e.pointerId);
+                elements.knob.classList.remove('cursor-grabbing');
+
+                // Snap knob back to 0 rotation
+                elements.knob.style.transform = 'rotate(0deg)';
+                
+                // Trigger one final, precise conversion
+                convertCurrency();
+            }
+
+            // -------------------------------------
+            // --- INITIALIZATION ---
+            // -------------------------------------
+
+            /**
+             * Attaches all primary event listeners to the DOM elements.
+             */
+            function initEventListeners() {
+                // Knob listeners (using pointer events for mouse and touch)
+                elements.knob.addEventListener('pointerdown', handleKnobPointerDown);
+                document.addEventListener('pointermove', handleKnobPointerMove);
+                document.addEventListener('pointerup', handleKnobPointerUp);
+
+                // Control button listeners
+                elements.swapBtn.addEventListener('click', handleSwap);
+                elements.resetBtn.addEventListener('click', handleReset);
+                
+                // Modal and currency selection listeners
+                elements.fromCurrencyBtn.addEventListener('click', () => openModal('from'));
+                elements.toCurrencyBtn.addEventListener('click', () => openModal('to'));
+                elements.closeModalBtn.addEventListener('click', closeModal);
+                elements.searchCurrencyInput.addEventListener('input', filterCurrencies);
+
+                // Close modal if clicking on the background overlay
+                elements.modal.addEventListener('click', (e) => {
+                    if (e.target === elements.modal) closeModal(); 
+                });
+            }
+
+            /**
+             * Main entry point for the application.
+             */
+            function main() {
+                initEventListeners();
+                loadCurrencies();
+            }
+
+            // Run the application
+            main();
+        });
+    </script>
+
+</body>
+</html>
+
+
